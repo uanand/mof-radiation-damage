@@ -34,6 +34,7 @@ class driftCorrection:
         [self.row,self.col] = gImg.shape
         
     def findDrift(self):
+        print ('Calculate drift - %s' %(self.inputDir))
         centreRList,centreCList = [],[]
         for frame in tqdm(range(self.firstFrame,self.lastFrame+1)):
             gImg = cv2.imread(self.imgDir+'/'+str(frame).zfill(6)+'.png',0)
@@ -54,6 +55,7 @@ class driftCorrection:
         numpy.save(self.driftParamsSmoothFile,numpy.column_stack((centreRList,centreCList)))
         
     def generateImages(self,driftCorrectionParams,scale,radius):
+        print ('Save drift corrected images - %s' %(self.inputDir))
         bImg = numpy.zeros([self.row,self.col],dtype='bool')
         for frame,centreR,centreC in tqdm(zip(list(range(self.firstFrame,self.lastFrame+1)),driftCorrectionParams[:,0],driftCorrectionParams[:,1])):
             gImg = cv2.imread(self.imgDir+'/'+str(frame).zfill(6)+'.png',0)
