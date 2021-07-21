@@ -14,11 +14,15 @@ df.dropna(subset=['inputDir'],inplace=True)
 
 
 for inputDir,fps,pixelSize,flux in df.values:
+    print ('Processing %s' %(inputDir))
+    
     dp = dataPrep.dataPrep(inputDir)
     dp.convertGatanMovie()
     dp.averageFrames(dp.outputPNGDir,dp.outputPNGDir+'_avg',20,'png')
     dp.averageFrames(dp.outputNPYDir,dp.outputNPYDir+'_avg',10,'npy')
     dp.averageFrames(dp.outputPNGDir,dp.outputDir,dp.numFrames,'png')
+    dp.rmdir(dp.outputPNGDir)
+    dp.rmdir(dp.outputNPYDir)
     
     drift = driftCorrection.driftCorrection(inputDir,sigma=10)
     drift.findDrift()

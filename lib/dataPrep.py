@@ -1,6 +1,7 @@
 import os
 import numpy
 import cv2
+import shutil
 import hyperspy.api as hs
 from tqdm import tqdm
 from os.path import join
@@ -36,6 +37,7 @@ class dataPrep:
         return inputFileList
     
     def convertGatanMovie(self):
+        print ('Converting gatan movie - %s' %(self.inputDir))
         minCount,maxCount = 1e10,-1e10
         for inputFile,frame in tqdm(zip(self.inputFileList,list(range(1,self.numFrames+1)))):
             f = hs.load(inputFile)
@@ -55,6 +57,7 @@ class dataPrep:
             cv2.imwrite(self.outputPNGDir+'/'+str(frame).zfill(6)+'.png',gImg)
             
     def averageFrames(self,path,outputDir,numFramesToAvg,extension,movingAvgFlag=True):
+        print ('Averaging image sequence - %s' %(path))
         fileIO.mkdir(outputDir)
         avgFrameList = []
         firstFrame,lastFrame = 1,self.numFrames
@@ -92,4 +95,8 @@ class dataPrep:
                         avgImg = avgImg+gImg
                 avgImg = avgImg/numFramesToAvg
                 numpy.save(outputFile,avgImg)
+                
+    def rmdir(self,path):
+        print ('Delete directory - %s' %(path))
+        shutil.rmtree(path)
     
