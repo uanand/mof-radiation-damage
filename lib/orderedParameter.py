@@ -1,10 +1,15 @@
 import numpy
+import os
 import cv2
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 import fileIO
 import misc
+import imageProcess
+
+if (os.name=='nt'):
+    plt.style.use('UMM_ISO9001')
 
 class orderedParameter:
     
@@ -33,7 +38,9 @@ class orderedParameter:
     def calculateOP(self,distanceRangePixel,stepSize):
         print ('Calculate ordered paramter')
         opImgDir = self.outputImgDir+'/orderedParamerter-'+str(distanceRangePixel[0])+'_'+str(distanceRangePixel[1])+'_'+str(stepSize)
+        opImgSeqDir = self.outputImgDir+'/orderedParamerter-'+str(distanceRangePixel[0])+'_'+str(distanceRangePixel[1])+'_'+str(stepSize)+'_seq'
         fileIO.mkdir(opImgDir)
+        fileIO.mkdir(opImgSeqDir)
         counter = 0
         
         distanceArr,qArr = [],[]
@@ -55,6 +62,8 @@ class orderedParameter:
             distanceMesh = numpy.sqrt((self.RR-centreR)**2 + (self.CC-centreC)**2)
             meanArr,medianArr,stdArr,ordParamArr_mean,ordParamArr_median = [],[],[],[],[]
             imgNPY = numpy.load(self.npyDir+'/'+str(frame).zfill(6)+'.npy')-minCount
+            imgPNG = cv2.imread(self.imgDir+'/'+str(frame).zfill(6)+'.png',0)
+            shellBorderImg = numpy.zeros(imgPNG.shape,dtype='bool')
             
             for distance in range(distanceRangePixel[0],distanceRangePixel[1]+1,stepSize):
                 distanceMask = numpy.logical_and(numpy.logical_and(distanceMesh>=distance,distanceMesh<distance+stepSize),self.mask)
@@ -74,6 +83,10 @@ class orderedParameter:
                     counter += 1
                     cv2.imwrite(opImgDir+'/'+str(counter).zfill(3)+'.png',finalImg)
                     
+                distanceMaskBdry = imageProcess.boundary(distanceMask)
+                distanceMaskBdry = imageProcess.binary_dilation(distanceMaskBdry,iterations=1)
+                imgPNG = numpy.maximum(imgPNG,distanceMaskBdry*255)
+                
             meanArr = numpy.asarray(meanArr)
             medianArr = numpy.asarray(medianArr)
             stdArr = numpy.asarray(stdArr)
@@ -93,6 +106,8 @@ class orderedParameter:
                 self.ordParamArr_mean = numpy.row_stack((self.ordParamArr_mean,ordParamArr_mean))
                 self.ordParamArr_median = numpy.row_stack((self.ordParamArr_median,ordParamArr_median))
                 
+            cv2.imwrite(opImgSeqDir+'/'+str(frame).zfill(6)+'.png',imgPNG)
+                
         numpy.save(self.outputDataDir+'/distanceArr-'+str(distanceRangePixel[0])+'_'+str(distanceRangePixel[1])+'_'+str(stepSize)+'.npy',self.distanceArr)
         numpy.save(self.outputDataDir+'/qArr-'+str(distanceRangePixel[0])+'_'+str(distanceRangePixel[1])+'_'+str(stepSize)+'.npy',self.qArr)
         numpy.save(self.outputDataDir+'/meanArr-'+str(distanceRangePixel[0])+'_'+str(distanceRangePixel[1])+'_'+str(stepSize)+'.npy',self.meanArr)
@@ -106,19 +121,20 @@ class orderedParameter:
         print ('Plotting %s' %(array))
         data = numpy.load(array)
         [row,col] = data.shape
-        
-        if ('100_1000_100' in saveFile):
+        # x = numpy.arange(1,row+1)/fps
+        if ('100_1000_100' in array):
             fig = plt.figure(figsize=(15,1))
             for i in range(col):
                 ax = fig.add_subplot(1,10,i+1)
                 print (i,data[:,i].min(),data[:,i].max())
+                # ax.plot(x,data[:,i])
                 ax.plot(data[:,i])
-                ax.set_xticks([])
+                # ax.set_xticks([])
                 ax.set_yticks([])
-            plt.savefig(saveFile,format='png')
-            plt.close()
+            # plt.savefig(saveFile,format='png')
+            plt.show()
             
-        if ('100_1000_50' in saveFile):
+        if ('100_1000_50' in array):
             fig = plt.figure(figsize=(15,3))
             for i in range(col):
                 ax = fig.add_subplot(2,10,i+1)
