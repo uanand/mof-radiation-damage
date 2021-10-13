@@ -115,3 +115,13 @@ def binary_erosion(bImg, iterations=1):
     bImg = ndimage.binary_erosion(bImg, iterations=iterations)
     return bImg
 ############################################################
+
+
+############################################################
+# BOUNDARY OF CONNECTED OBJECTS
+############################################################
+def boundary(bImg):
+    bImgErode = binary_erosion(bImg)
+    bImgBdry = numpy.logical_xor(bImg,bImgErode)
+    return bImgBdry
+############################################################
